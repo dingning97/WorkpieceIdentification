@@ -31,13 +31,10 @@
     <ClCompile Include="WorkpieceIdentification.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MyCamera.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="MyDetector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MyCamera_2.cpp">
+    <ClCompile Include="MyCamera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -57,13 +54,10 @@
     </QtRcc>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="MyCamera.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="MyDetector.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MyCamera_2.h">
+    <ClInclude Include="MyCamera.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

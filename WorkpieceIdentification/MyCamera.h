@@ -1,4 +1,5 @@
 #pragma once
+#pragma once
 #include"GalaxyIncludes.h"
 #include<iostream>
 #include <opencv2/core/core.hpp>
@@ -6,24 +7,30 @@
 #include <opencv2/highgui/highgui.hpp>  
 
 
-class MyCamera
+class MyCamera_2
 {
 public:
 	cv::Mat m_frame;
 	std::string modelName = "";
 	std::string MAC = "";
-	bool bIsDeviceLoaded = false;
-	bool bIsDeviceOpen = false;
-	bool bIsStreamOpen = false;
+	bool m_bIsOpen = false;
+	bool m_bIsSnap = false;
 	int resWidth, resHeight;
 	int minWidth = 64, minHeight = 64;
 	int maxWidth = 2448, maxHeight = 2048;
 
-	CGXDevicePointer		 objDevicePtr;
-	CGXStreamPointer		 objStreamPtr;
-	CImageDataPointer        objImageDataPtr;
-	CGXFeatureControlPointer objFeatureControlPtr;
-	
+	CGXDevicePointer			m_objDevicePtr;
+	CGXStreamPointer			m_objStreamPtr;
+	CImageDataPointer			m_objImageDataPtr;
+	CGXFeatureControlPointer	m_objFeatureControlPtr;
+	CImageProcessConfigPointer  m_objImageProcessPtr;
+
+
+	void openDevice();
+	void closeDevice();
+	void startSnap();
+	void stopSnap();
+
 	void configCameraParamOnInit();
 	cv::Mat getSingleFrame();
 	void balanceWhite();
@@ -31,23 +38,5 @@ public:
 	void setResolution(int width, int height, bool on_init = true);
 	std::string saveCurrentFrame();
 
-	MyCamera(int initWidth, int initHeight);
-	~MyCamera();
+	//~MyCamera_2();
 };
-
-
-/**************************************/
-//This Camera Class is for openCV
-
-//class MyCamera
-//{
-//public:
-//	cv::Mat frame;
-//	VideoCapture cap;
-//	void getSingleFrame();
-//	void balanceWhite();
-//	void setExposureTime();
-//	void saveCurrentFrame();
-//	MyCamera();
-//	~MyCamera();
-//};

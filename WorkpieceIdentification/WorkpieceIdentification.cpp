@@ -20,11 +20,11 @@ WorkpieceIdentification::WorkpieceIdentification(QWidget *parent): QMainWindow(p
 	ui.horizontalSlider_exposureTime->setValue(11);
 	QObject::connect(timer_camera, SIGNAL(timeout()), this, SLOT(on_timer_camera_timeout()));
 	setWidgetsDisabled();
-	checkIsCameraLoaded();// check camera's availability and try to reload if not
+	//checkIsCameraLoaded();// check camera's availability and try to reload if not
 }
 
 void WorkpieceIdentification::on_pushButton_openCamera_clicked()
-{
+{/***********   Original Code Block   *********
 	if (!timer_camera->isActive())
 	{
 		flag_cameraOpened = true;
@@ -46,6 +46,45 @@ void WorkpieceIdentification::on_pushButton_openCamera_clicked()
 			flag_startDetection = false;
 			ui.pushButton_startDetection->setText("Start Detecting");
 		}
+	}*/
+/**************************************************************/
+//***** new testing block
+	if (!timer_camera->isActive())
+	{
+		cam.openDevice();
+		if (cam.m_bIsOpen)
+		{
+			cam.startSnap();
+			if (cam.m_bIsSnap)
+			{
+				string info = "Camera Is Succeddfully Loaded.\nModel:" + cam.modelName + "\nMAC:" + cam.MAC;
+				ui.label_cameraInfo->setText(info.c_str());
+				flag_cameraOpened = true;
+				ui.pushButton_openCamera->setText("Close Camera");
+				setWidgetsEnabled();
+				timer_camera->start(40);
+			}
+		}
+	}
+	else
+	{
+		timer_camera->stop();
+		cam.stopSnap();
+		cam.closeDevice();
+		flag_cameraOpened = false;
+		ui.pushButton_openCamera->setText("Open Camera");
+		ui.label_display->clear();
+		ui.label_display->setText("Camera not running.");
+		ui.label_showResult->setText("Camera not running.");
+		string info = "Camera Closed.\nModel:Unknown\nMAC:Unknown";
+		ui.label_cameraInfo->setText(info.c_str());
+		ui.horizontalSlider_exposureTime->setValue(11);
+		if (flag_startDetection)
+		{
+			flag_startDetection = false;
+			ui.pushButton_startDetection->setText("Start Detecting");
+		}
+		setWidgetsDisabled();
 	}
 }
 
@@ -159,25 +198,61 @@ void WorkpieceIdentification::on_horizontalSlider_exposureTime_valueChanged()
 
 void WorkpieceIdentification::on_spinBox_cannyA_valueChanged()
 {
-	int val = ui.spinBox_cannyA->value();
-	std::string sval = "Canny Thresh A: "+std::to_string(val);
-	ui.label->setText(QString::fromStdString(sval));
-}
-
-void WorkpieceIdentification::on_spinBox_cannyB_valueChanged()
-{
-	int val = ui.spinBox_cannyB->value();
-	std::string sval = "Canny Thresh B: "+std::to_string(val);
-	ui.label_2->setText(QString::fromStdString(sval));
+	int oldVal = detector.cannyThreshA;
+	int inVal = ui.spinBox_cannyA->value();
+	if (abs(oldVal - inVal) < 2)
+	{
+		if (inVal < detector.cannyThreshB)
+		{
+			std::string sval = "Canny Thresh A: " + std::to_string(inVal);
+			ui.label->setText(QString::fromStdString(sval));
+			detector.cannyThreshA = inVal;
+		}
+		else
+		{
+			QMessageBox::information(NULL, "Error", "Canny thresh A has to be less than Canny thresh B.", QMessageBox::Ok);
+			ui.spinBox_cannyA->setValue(oldVal);
+		}
+	}
 }
 
 void WorkpieceIdentification::on_spinBox_cannyA_editingFinished()
 {
 	if (ui.spinBox_cannyA->hasFocus())
 	{
-		int val = ui.spinBox_cannyA->value();
-		std::string sval = "Canny Thresh A: " + std::to_string(val);
-		ui.label->setText(QString::fromStdString(sval));
+		int oldVal = detector.cannyThreshA;
+		int inVal = ui.spinBox_cannyA->value();
+		if (inVal < detector.cannyThreshB)
+		{
+			std::string sval = "Canny Thresh A: " + std::to_string(inVal);
+			ui.label->setText(QString::fromStdString(sval));
+			detector.cannyThreshA = inVal;
+		}
+		else
+		{
+			QMessageBox::information(NULL, "Error", "Canny thresh A has to be less than Canny thresh B.", QMessageBox::Ok);
+			ui.spinBox_cannyA->setValue(oldVal);
+		}
+	}
+}
+
+void WorkpieceIdentification::on_spinBox_cannyB_valueChanged()
+{
+	int oldVal = detector.cannyThreshB;
+	int inVal = ui.spinBox_cannyB->value();
+	if (abs(oldVal - inVal) < 2)
+	{
+		if (inVal > detector.cannyThreshA)
+		{
+			std::string sval = "Canny Thresh B: " + std::to_string(inVal);
+			ui.label_2->setText(QString::fromStdString(sval));
+			detector.cannyThreshB = inVal;
+		}
+		else
+		{
+			QMessageBox::information(NULL, "Error", "Canny thresh B has to be greater than Canny thresh A.", QMessageBox::Ok);
+			ui.spinBox_cannyB->setValue(oldVal);
+		}
 	}
 }
 
@@ -185,33 +260,19 @@ void WorkpieceIdentification::on_spinBox_cannyB_editingFinished()
 {
 	if (ui.spinBox_cannyB->hasFocus())
 	{
-		int val = ui.spinBox_cannyB->value();
-		std::string sval = "Canny Thresh B: " + std::to_string(val);
-		ui.label_2->setText(QString::fromStdString(sval));
-	}
-}
-
-void WorkpieceIdentification::on_pushButton_reloadCamera_clicked()
-{
-	cam = MyCamera(1200, 1200);
-	checkIsCameraLoaded();
-}
-
-void WorkpieceIdentification::checkIsCameraLoaded()
-{
-	if (cam.bIsDeviceLoaded == false)
-	{
-		ui.pushButton_openCamera->setDisabled(true);
-		QMessageBox::information(NULL, "Error", "Fail to load camera. Please check and reload.", QMessageBox::Ok);
-		string info = "Fail To Load Camera.";
-		ui.label_cameraInfo->setText(info.c_str());
-	}
-	else
-	{
-		ui.pushButton_openCamera->setEnabled(true);
-		ui.pushButton_reloadCamera->setDisabled(true);
-		string info = "Camera Is Succeddfully Loaded.\nModel:" + cam.modelName + "\nMAC:" + cam.MAC;
-		ui.label_cameraInfo->setText(info.c_str());
+		int oldVal = detector.cannyThreshB;
+		int inVal = ui.spinBox_cannyB->value();
+		if (inVal > detector.cannyThreshA)
+		{
+			std::string sval = "Canny Thresh B: " + std::to_string(inVal);
+			ui.label_2->setText(QString::fromStdString(sval));
+			detector.cannyThreshB = inVal;
+		}
+		else
+		{
+			QMessageBox::information(NULL, "Error", "Canny thresh B has to be greater than Canny thresh A.", QMessageBox::Ok);
+			ui.spinBox_cannyB->setValue(oldVal);
+		}
 	}
 }
 

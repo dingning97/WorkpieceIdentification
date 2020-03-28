@@ -22,8 +22,8 @@ class MyDetector
 {
 public:
 	bool    flag_unevenLightCompensate = false;
-	double	cannyThreshA = 30;
-	double	cannyThreshB = 70;
+	int	cannyThreshA = 30;
+	int	cannyThreshB = 70;
 	double  close_ksize_percentage = 5. / 100.;
 	double  positions[6] = { 1. / 12., 3. / 12., 5. / 12., 7. / 12., 9. / 12., 11. / 12. };
 	double	radius_template[4][6];

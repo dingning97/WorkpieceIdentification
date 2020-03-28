@@ -96,7 +96,6 @@
   <ItemGroup>
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MyCamera.cpp" />
-    <ClCompile Include="MyCamera_2.cpp" />
     <ClCompile Include="MyDetector.cpp" />
     <ClCompile Include="WorkpieceIdentification.cpp" />
   </ItemGroup>
@@ -111,7 +110,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MyCamera.h" />
-    <ClInclude Include="MyCamera_2.h" />
     <ClInclude Include="MyDetector.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

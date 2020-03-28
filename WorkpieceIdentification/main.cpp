@@ -3,8 +3,7 @@
 
 int main(int argc, char *argv[])
 {
-	IGXFactory::GetInstance().Init();
-
+	IGXFactory::GetInstance().Init();//new for test
 	QApplication a(argc, argv);
 	WorkpieceIdentification w;
 	w.show();

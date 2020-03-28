@@ -24,6 +24,13 @@
      </rect>
     </property>
     <layout class="QGridLayout" name="gridLayout">
+     <item row="0" column="2">
+      <widget class="QPushButton" name="pushButton_unused">
+       <property name="text">
+        <string>Unused</string>
+       </property>
+      </widget>
+     </item>
      <item row="0" column="1">
       <widget class="QPushButton" name="pushButton_openCamera">
        <property name="text">
@@ -31,52 +38,31 @@
        </property>
       </widget>
      </item>
-     <item row="2" column="1">
+     <item row="1" column="1">
       <widget class="QPushButton" name="pushButton_startDetection">
        <property name="text">
         <string>Start Detection</string>
        </property>
       </widget>
      </item>
-     <item row="3" column="2">
+     <item row="2" column="2">
       <widget class="QPushButton" name="pushButton_exit">
        <property name="text">
         <string>Exit</string>
        </property>
       </widget>
      </item>
-     <item row="0" column="2">
-      <widget class="QPushButton" name="pushButton_reloadCamera">
-       <property name="text">
-        <string>Reload Camera</string>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="2">
+     <item row="1" column="2">
       <widget class="QPushButton" name="pushButton_balanceWhite">
        <property name="text">
         <string>Balance White</string>
        </property>
       </widget>
      </item>
-     <item row="3" column="1">
+     <item row="2" column="1">
       <widget class="QPushButton" name="pushButton_savePicture">
        <property name="text">
         <string>Save Picture</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="1">
-      <widget class="QPushButton" name="pushButton_startSnap">
-       <property name="text">
-        <string>Start Snap</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="2">
-      <widget class="QPushButton" name="pushButton_stopSnap">
-       <property name="text">
-        <string>Stop Snap</string>
        </property>
       </widget>
      </item>
@@ -250,9 +236,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>Camera Succeddfully Loaded.
-Model:
-MAC:</string>
+     <string>Camera Closed.</string>
     </property>
    </widget>
    <zorder>gridLayoutWidget</zorder>

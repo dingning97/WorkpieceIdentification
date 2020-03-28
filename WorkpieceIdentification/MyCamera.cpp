@@ -8,82 +8,31 @@
 using namespace std;
 
 
-MyCamera::MyCamera(int initWidth, int initHeight)
+//MyCamera_2::MyCamera_2()
+//{
+//
+//}
+
+void MyCamera_2::configCameraParamOnInit()
 {
-	try {
-		//IGXFactory::GetInstance().Init();
-		GxIAPICPP::gxdeviceinfo_vector vectorDeviceInfo;
-		IGXFactory::GetInstance().UpdateDeviceList(1000, vectorDeviceInfo);
-		if (vectorDeviceInfo.size() >= 1)
-		{
-			bIsDeviceLoaded = true;
-			MAC = vectorDeviceInfo[0].GetMAC();
-			modelName = vectorDeviceInfo[0].GetModelName();
-			// Open Device
-			objDevicePtr = IGXFactory::GetInstance().OpenDeviceBySN(vectorDeviceInfo[0].GetSN(), GX_ACCESS_EXCLUSIVE);
-			bIsDeviceOpen = true;
-			// Get Feature Control Pointer And Initialize Features
-			objFeatureControlPtr = objDevicePtr->GetRemoteFeatureControl();
-			configCameraParamOnInit();
-			// Set Resolution
-			setResolution(initWidth, initHeight);
-			// Open Stream And Get Stream Pointer
-			objStreamPtr = objDevicePtr->OpenStream(0);
-			bIsStreamOpen = true;
-			// Start Acquisition
-			if (objDevicePtr->GetStreamCount() > 0)
-			{
-				objStreamPtr->StartGrab();
-				objFeatureControlPtr->GetCommandFeature("AcquisitionStart")->Execute();
-			}
-		}
-		else
-		{
-			bIsDeviceLoaded = false;
-			//IGXFactory::GetInstance().Uninit();
-		}
-	}
-	catch (CGalaxyException& e) { cout << e.what() << "\nthis CGalaxyException is from init"; }
-	catch (exception& se) { cout << "\nthis exception is from init"; }
+	m_objFeatureControlPtr->GetEnumFeature("TriggerMode")->SetValue("On");
+	m_objFeatureControlPtr->GetEnumFeature("TriggerSource")->SetValue("Software");
+	m_objFeatureControlPtr->GetFloatFeature("ExposureTime")->SetValue(10000.0);
+	m_objFeatureControlPtr->GetFloatFeature("Gain")->SetValue(10.0);
+	m_objFeatureControlPtr->GetEnumFeature("BalanceWhiteAuto")->SetValue("Once");
+	m_objImageProcessPtr->EnableDenoise(true);
 }
 
 
-void MyCamera::configCameraParamOnInit()
+//MyCamera_2::~MyCamera_2()
+//{
+//	;
+//}
+
+
+cv::Mat MyCamera_2::getSingleFrame()
 {
-	objFeatureControlPtr->GetEnumFeature("TriggerMode")->SetValue("On");
-	objFeatureControlPtr->GetEnumFeature("TriggerSource")->SetValue("Software");
-	objFeatureControlPtr->GetFloatFeature("ExposureTime")->SetValue(10000.0);
-	objFeatureControlPtr->GetFloatFeature("Gain")->SetValue(10.0);
-	objFeatureControlPtr->GetEnumFeature("BalanceWhiteAuto")->SetValue("Once");
-}
-
-
-MyCamera::~MyCamera()
-{
-	try
-	{
-		if (bIsDeviceLoaded)
-		{
-			objFeatureControlPtr->GetCommandFeature("AcquisitionStop")->Execute();
-			if (bIsStreamOpen)
-			{
-				objStreamPtr->StopGrab();
-				objStreamPtr->UnregisterCaptureCallback();
-				objStreamPtr->Close();
-			}
-			if (bIsDeviceOpen) objDevicePtr->Close();
-			//IGXFactory::GetInstance().Uninit();
-		}
-	}
-	catch (CGalaxyException& e) { cout << "\nthis is from ~init CGalaxyException\n" << e.what(); }
-	catch (exception& e) { cout << "\nthis is from ~init\nstd::exception"; }
-}
-
-
-cv::Mat MyCamera::getSingleFrame()
-{
-	//objFeatureControlPtr->GetCommandFeature("TriggerSoftware")->Execute();
-	try { objFeatureControlPtr->GetCommandFeature("TriggerSoftware")->Execute(); }
+	try { m_objFeatureControlPtr->GetCommandFeature("TriggerSoftware")->Execute(); }
 	catch (CGalaxyException& e)
 	{
 		string se = string(e.what());
@@ -92,32 +41,32 @@ cv::Mat MyCamera::getSingleFrame()
 		OutFile.close();
 	}
 	cv::Mat frame;
-	try {objImageDataPtr = objStreamPtr->GetImage(100);}
+	try { m_objImageDataPtr = m_objStreamPtr->GetImage(100); }
 	catch (CGalaxyException& e) { return frame; }
-	if (objImageDataPtr->GetStatus() == GX_FRAME_STATUS_SUCCESS)
+	if (m_objImageDataPtr->GetStatus() == GX_FRAME_STATUS_SUCCESS)
 	{
-		frame.create(objImageDataPtr->GetHeight(), objImageDataPtr->GetWidth(), CV_8UC3);
+		frame.create(m_objImageDataPtr->GetHeight(), m_objImageDataPtr->GetWidth(), CV_8UC3);
 		void* pRGB24Buffer = NULL;
-		pRGB24Buffer = objImageDataPtr->ConvertToRGB24(GX_BIT_0_7, GX_RAW2RGB_NEIGHBOUR, true);
-		memcpy(frame.data, pRGB24Buffer, 3 * (objImageDataPtr->GetHeight())*(objImageDataPtr->GetWidth()));
+		pRGB24Buffer = m_objImageDataPtr->ConvertToRGB24(GX_BIT_0_7, GX_RAW2RGB_NEIGHBOUR, true);
+		memcpy(frame.data, pRGB24Buffer, 3 * (m_objImageDataPtr->GetHeight())*(m_objImageDataPtr->GetWidth()));
 		cv::flip(frame, frame, 0);
 	}
 	return frame;
 }
 
 
-void MyCamera::balanceWhite()
+void MyCamera_2::balanceWhite()
 {
-	if (bIsDeviceOpen) objFeatureControlPtr->GetEnumFeature("BalanceWhiteAuto")->SetValue("Once");
+	if (m_bIsOpen) m_objFeatureControlPtr->GetEnumFeature("BalanceWhiteAuto")->SetValue("Once");
 }
 
-void MyCamera::setExposureTime(float val)
+void MyCamera_2::setExposureTime(float val)
 {
-	if (bIsDeviceOpen && 20.0 < val && val < 1000000.0)
-		objFeatureControlPtr->GetFloatFeature("ExposureTime")->SetValue(val);
+	if (m_bIsOpen && 20.0 < val && val < 1000000.0)
+		m_objFeatureControlPtr->GetFloatFeature("ExposureTime")->SetValue(val);
 }
 
-void MyCamera::setResolution(int width, int height, bool on_init)
+void MyCamera_2::setResolution(int width, int height, bool on_init)
 {
 	if (minWidth <= width && minHeight <= height && width <= maxWidth && height <= maxHeight)
 	{
@@ -126,10 +75,10 @@ void MyCamera::setResolution(int width, int height, bool on_init)
 
 		if (on_init)
 		{
-			objFeatureControlPtr->GetIntFeature("Width")->SetValue(width);
-			objFeatureControlPtr->GetIntFeature("Height")->SetValue(height);
-			objFeatureControlPtr->GetIntFeature("OffsetX")->SetValue(offset_x);
-			objFeatureControlPtr->GetIntFeature("OffsetY")->SetValue(offset_y);
+			m_objFeatureControlPtr->GetIntFeature("Width")->SetValue(width);
+			m_objFeatureControlPtr->GetIntFeature("Height")->SetValue(height);
+			m_objFeatureControlPtr->GetIntFeature("OffsetX")->SetValue(offset_x);
+			m_objFeatureControlPtr->GetIntFeature("OffsetY")->SetValue(offset_y);
 		}
 		else
 		{
@@ -139,7 +88,7 @@ void MyCamera::setResolution(int width, int height, bool on_init)
 	else {}
 }
 
-std::string MyCamera::saveCurrentFrame()
+std::string MyCamera_2::saveCurrentFrame()
 {
 	if (!m_frame.empty())
 	{
@@ -157,80 +106,135 @@ std::string MyCamera::saveCurrentFrame()
 	}
 }
 
-
-
-
-#ifdef CAMERA_TEST
-int main()
+void MyCamera_2::openDevice()
 {
-	cv::Mat showFrame;
-	MyCamera* cam = new MyCamera(1200, 1200);
-	while (1)
+	// TODO: Add your control notification handler code here
+	bool bIsDeviceOpen = false;         ///< 设备是否打开标志
+	bool bIsStreamOpen = false;         ///< 设备流是否打开标志
+
+	try
 	{
-		showFrame = cam->getSingleFrame();
-		if (!showFrame.empty())
+		GxIAPICPP::gxdeviceinfo_vector vectorDeviceInfo;
+		IGXFactory::GetInstance().UpdateDeviceList(1000, vectorDeviceInfo);
+		if (vectorDeviceInfo.size() <= 0)
 		{
-			cv::resize(showFrame, showFrame, cv::Size(512, 512));
-			cv::imshow("from camera", showFrame);
-			if (cv::waitKey(20) > 0)
-				break;
+			return;
+		}
+		m_objDevicePtr = IGXFactory::GetInstance().OpenDeviceBySN(vectorDeviceInfo[0].GetSN(), GX_ACCESS_EXCLUSIVE);
+		bIsDeviceOpen = true;
+		m_objFeatureControlPtr = m_objDevicePtr->GetRemoteFeatureControl();
+		m_objImageProcessPtr = m_objDevicePtr->CreateImageProcessConfig();
+		MAC = vectorDeviceInfo[0].GetMAC();
+		modelName = vectorDeviceInfo[0].GetModelName();
+
+		int nStreamCount = m_objDevicePtr->GetStreamCount();
+		if (nStreamCount > 0)
+		{
+			m_objStreamPtr = m_objDevicePtr->OpenStream(0);
+			bIsStreamOpen = true;
+		}
+		else
+			throw exception("未发现设备流!");
+
+		// 建议用户在打开网络相机之后，根据当前网络环境设置相机的流通道包长值，以提高网络相机的采集性能,设置方法参考以下代码。
+		GX_DEVICE_CLASS_LIST objDeviceClass = m_objDevicePtr->GetDeviceInfo().GetDeviceClass();
+		if (GX_DEVICE_CLASS_GEV == objDeviceClass)
+		{
+			// 判断设备是否支持流通道数据包功能
+			if (true == m_objFeatureControlPtr->IsImplemented("GevSCPSPacketSize"))
+			{
+				// 获取当前网络环境的最优包长值
+				int nPacketSize = m_objStreamPtr->GetOptimalPacketSize();
+				// 将最优包长值设置为当前设备的流通道包长值
+				m_objFeatureControlPtr->GetIntFeature("GevSCPSPacketSize")->SetValue(nPacketSize);
+			}
+		}
+
+		configCameraParamOnInit();
+		m_bIsOpen = true;
+		//TODO 更新ui界面 enable and disable buttons.
+	}
+	catch (CGalaxyException& e)
+	{
+		if (bIsStreamOpen)
+		{
+			m_objStreamPtr->Close();
+		}
+		if (bIsDeviceOpen)
+		{
+			m_objDevicePtr->Close();
+		}
+		return;
+	}
+	catch (std::exception& e)
+	{
+		if (bIsStreamOpen)
+		{
+			m_objStreamPtr->Close();
+		}
+		if (bIsDeviceOpen)
+		{
+			m_objDevicePtr->Close();
+		}
+		return ;
+	}
+}
+
+
+
+void MyCamera_2::closeDevice()
+{
+
+	try
+	{
+		if (m_bIsSnap)
+		{
+			m_objFeatureControlPtr->GetCommandFeature("AcquisitionStop")->Execute();
+			m_objStreamPtr->StopGrab();
 		}
 	}
+	catch (CGalaxyException) { ; }
 
-	cout << "while loop broken";
-	cv::destroyAllWindows();
-	delete cam;
+	try
+	{
+		m_objStreamPtr->Close();
+	}
+	catch (CGalaxyException) { ; }
+
+	try
+	{
+		m_objDevicePtr->Close();
+	}
+	catch (CGalaxyException) { ; }
+	//update UI
+	m_bIsOpen = false;
+	m_bIsSnap = false;
 }
-#endif
 
+void MyCamera_2::startSnap()
+{
+	try
+	{
+		m_objStreamPtr->StartGrab();
+		m_objFeatureControlPtr->GetCommandFeature("AcquisitionStart")->Execute();
+		m_objFeatureControlPtr->GetEnumFeature("TriggerMode")->SetValue("On");
+		m_objFeatureControlPtr->GetEnumFeature("TriggerSource")->SetValue("Software");
+		m_bIsSnap = true;
+		//更新界面
+	}
+	catch (CGalaxyException& e) { ; }
+	catch (std::exception& e) { ; }
+}
 
-
-
-
-/**************************************/
-//This Camera Class is for openCV
-
-//MyCamera::MyCamera()
-//{
-//	cap.open(0);
-//}
-//
-//MyCamera::~MyCamera()
-//{
-//	if (cap.isOpened()) cap.release();
-//
-//	destroyAllWindows();
-//}
-//
-//
-//void MyCamera::getSingleFrame()
-//{
-//	cap >> frame;
-//	resize(frame, frame, Size(640, 640));
-//}
-//
-//void MyCamera::saveCurrentFrame()
-//{
-//	using namespace std;
-//	auto t = chrono::system_clock::to_time_t(chrono::system_clock::now());
-//	stringstream ss;
-//	ss << put_time(localtime(&t), "%F_%H-%M-%S");
-//	string str = "D:\\1__GraduationProject\\" + ss.str() + ".jpg";
-//	if (!frame.empty()) imwrite(str, frame);
-//}
-/////////////////////////////////////////////////////////////
-//
-//int main()
-//{
-//	MyCamera cam(0);
-//	while (1)
-//	{
-//		cam.getFrame();
-//		if (cam.frame.empty())
-//			break;
-//		imshow("video", cam.frame);
-//		if (waitKey(20) > 0)
-//			break;
-//	}
-//
-//}
+void MyCamera_2::stopSnap()
+{
+	try
+	{
+		m_objFeatureControlPtr->GetCommandFeature("AcquisitionStop")->Execute();
+		m_objStreamPtr->StopGrab();
+		m_bIsSnap = false;
+		//更新界面
+	}
+	catch (CGalaxyException& e) { ; }
+	catch (std::exception& e) { ; }
+}
