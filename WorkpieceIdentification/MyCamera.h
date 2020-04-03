@@ -7,7 +7,7 @@
 #include <opencv2/highgui/highgui.hpp>  
 
 
-class MyCamera_2
+class MyCamera
 {
 public:
 	cv::Mat m_frame;
@@ -38,5 +38,5 @@ public:
 	void setResolution(int width, int height, bool on_init = true);
 	std::string saveCurrentFrame();
 
-	//~MyCamera_2();
+	//~MyCamera();
 };

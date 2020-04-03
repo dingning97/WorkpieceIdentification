@@ -97,6 +97,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MyCamera.cpp" />
     <ClCompile Include="MyDetector.cpp" />
+    <ClCompile Include="MyLocator.cpp" />
     <ClCompile Include="WorkpieceIdentification.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -111,6 +112,7 @@
   <ItemGroup>
     <ClInclude Include="MyCamera.h" />
     <ClInclude Include="MyDetector.h" />
+    <ClInclude Include="MyLocator.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

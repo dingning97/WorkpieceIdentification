@@ -1,5 +1,6 @@
 #include "WorkpieceIdentification.h"
 #include <QtWidgets/qmessagebox.h>
+#include <QProgressDialog>
 #include <string>
 
 using namespace std;
@@ -12,6 +13,9 @@ WorkpieceIdentification::WorkpieceIdentification(QWidget *parent): QMainWindow(p
 	ui.spinBox_cannyA->setRange(1, 254);
 	ui.spinBox_cannyB->setValue(70);
 	ui.spinBox_cannyB->setRange(1, 254);
+	ui.horizontalSlider_contourThresh->setMinimum(25);
+	ui.horizontalSlider_contourThresh->setMaximum(250);
+	ui.horizontalSlider_contourThresh->setValue(100);
 	ui.horizontalSlider_closeKSize->setMinimum(1);
 	ui.horizontalSlider_closeKSize->setMaximum(10);
 	ui.horizontalSlider_closeKSize->setValue(5);
@@ -23,32 +27,39 @@ WorkpieceIdentification::WorkpieceIdentification(QWidget *parent): QMainWindow(p
 	//checkIsCameraLoaded();// check camera's availability and try to reload if not
 }
 
-void WorkpieceIdentification::on_pushButton_openCamera_clicked()
-{/***********   Original Code Block   *********
-	if (!timer_camera->isActive())
+
+
+void WorkpieceIdentification::on_pushButton_calibrateCoor_clicked()
+{
+	if (flag_startDetection)
 	{
-		flag_cameraOpened = true;
-		ui.pushButton_openCamera->setText("Close Camera");
-		setWidgetsEnabled();
-		timer_camera->start(40);
+		QMessageBox::information(NULL, "Error", "Stop Detection Before Calibrating.", QMessageBox::Ok);
+		return;
+	}
+	if (flag_cameraOpened)
+	{
+		//cv::Mat useFrame = currentFrame;
+		string intrFile = "./intrinsicParam.txt";
+		string distCoeffsFile = "./distCoeffs.txt";
+		locator.intrinsicMat = MyLocator::loadMatFromFile(intrFile, 3, 3);
+		locator.distCoeffs = MyLocator::loadMatFromFile(distCoeffsFile, 1, 5);
+
+		if (locator.calibrateSingleImage(currentFrame))
+		{
+			QMessageBox::information(NULL, "Ok", "Successful calibration.", QMessageBox::Ok);
+		}
+		else
+		{
+			QMessageBox::information(NULL, "Error", "Calibration failure.", QMessageBox::Ok);
+		}
 	}
 	else
-	{
-		flag_cameraOpened = false;
-		timer_camera->stop();
-		setWidgetsDisabled();
-		ui.pushButton_openCamera->setText("Open Camera");
-		ui.label_display->clear();
-		ui.label_display->setText("Camera not running.");
-		ui.label_showResult->setText("Camera not running.");
-		if(flag_startDetection)
-		{
-			flag_startDetection = false;
-			ui.pushButton_startDetection->setText("Start Detecting");
-		}
-	}*/
-/**************************************************************/
-//***** new testing block
+		QMessageBox::information(NULL, "Error", "Camera Not Running.", QMessageBox::Ok);
+}
+
+
+void WorkpieceIdentification::on_pushButton_openCamera_clicked()
+{
 	if (!timer_camera->isActive())
 	{
 		cam.openDevice();
@@ -88,27 +99,33 @@ void WorkpieceIdentification::on_pushButton_openCamera_clicked()
 	}
 }
 
+
 void WorkpieceIdentification::on_timer_camera_timeout()
 {
-	cv::Mat frame = cam.getSingleFrame();
-	if(!frame.empty())
+	currentFrame = cam.getSingleFrame();
+	if(!currentFrame.empty())
 	{
-		cv::resize(frame, frame, cv::Size(640, 640));
+		cv::Mat showFrame;
+		int width = currentFrame.size().width;
+		int height = currentFrame.size().height;
+		double scaleFactor = double(width) / double(displayRes);
+		int newHeight = height / scaleFactor;
+		cv::resize(currentFrame, showFrame, cv::Size(displayRes, newHeight));
 		if (flag_startDetection) 
-			frame = detectOnFrame(frame);
-		cvtColor(frame, frame, CV_BGR2RGB);
-		QImage showFrame = QImage((const uchar*)(frame.data), frame.cols, frame.rows, QImage::Format_RGB888);
-		ui.label_display->setPixmap(QPixmap::fromImage(showFrame));
+			showFrame = detectOnFrame(showFrame, scaleFactor);
+		cv::cvtColor(showFrame, showFrame, CV_BGR2RGB);
+		QImage qFrame = QImage((const uchar*)(showFrame.data), showFrame.cols, showFrame.rows, QImage::Format_RGB888);
+		ui.label_display->setPixmap(QPixmap::fromImage(qFrame));
 	}
 }
 
 
-cv::Mat WorkpieceIdentification::detectOnFrame(cv::Mat frame)
+cv::Mat WorkpieceIdentification::detectOnFrame(const cv::Mat &frame, double scaleFactor)
 {
 	vector<Workpiece> instances = detector.segmentAndGetInstance(frame, false);
 	if (instances.size() != 0)
 	{
-		updateDetectionResult(instances);
+		updateDetectionResult(instances, scaleFactor);
 		return detector.drawInstances(frame, instances);
 	}
 	else
@@ -116,13 +133,19 @@ cv::Mat WorkpieceIdentification::detectOnFrame(cv::Mat frame)
 }
 
 
-void WorkpieceIdentification::updateDetectionResult(vector<Workpiece> instances)
+void WorkpieceIdentification::updateDetectionResult(const vector<Workpiece> &instances, double scaleFactor)
 {
 	string str = "Number of items : " + to_string(instances.size()) + "\n\n\n";
 	for (int i = 0; i < instances.size(); i++)
 	{
-		str += "class : " + to_string(instances[i].cls) + "\n";
-		str += "centroid : (" + to_string(instances[i].centroid.x) + ", " + to_string(instances[i].centroid.y) + ")\n\n";
+		str += "\nclass : " + to_string(instances[i].cls) + "\n";
+		str += "Img Coor :\n(" + to_string(instances[i].centroid.x) + ", " + to_string(instances[i].centroid.y) + ")\n";
+		if ((!locator.tVec.empty())&& (!locator.rVec.empty()))
+		{
+			cv::Mat worldPt = locator.calcRealCoor(cv::Point2f(instances[i].centroid.x * scaleFactor, instances[i].centroid.y * scaleFactor));
+			str += "World Coor :\n(" + to_string(int(worldPt.at<double>(0, 0))) + "mm, "
+				+ to_string(int(worldPt.at<double>(1, 0))) + "mm)\n";
+		}
 	}
 	ui.label_showResult->setText(str.c_str());
 }
@@ -171,6 +194,19 @@ void WorkpieceIdentification::on_pushButton_balanceWhite_clicked()
 void WorkpieceIdentification::on_pushButton_exit_clicked()
 {
 	close();
+}
+
+void WorkpieceIdentification::on_horizontalSlider_contourThresh_valueChanged()
+{
+	if (flag_cameraOpened)
+	{
+		int val = ui.horizontalSlider_contourThresh->value();
+		int thresh = val * 4;
+		std::string sval = "cntr thresh:" + std::to_string(thresh);
+		ui.label_7->setText(sval.c_str());
+		detector.contourFilterThresh = thresh;
+	}
+
 }
 
 void WorkpieceIdentification::on_horizontalSlider_closeKSize_valueChanged()
@@ -284,7 +320,7 @@ void WorkpieceIdentification::setWidgetsDisabled()
 	ui.pushButton_balanceWhite->setDisabled(true);
 	ui.pushButton_startDetection->setDisabled(true);
 
-	ui.horizontalSlider_3->setDisabled(true);
+	ui.horizontalSlider_contourThresh->setDisabled(true);
 	ui.horizontalSlider_closeKSize->setDisabled(true);
 	ui.horizontalSlider_exposureTime->setDisabled(true);
 
@@ -302,7 +338,7 @@ void WorkpieceIdentification::setWidgetsEnabled()
 	ui.pushButton_balanceWhite->setEnabled(true);
 	ui.pushButton_startDetection->setEnabled(true);
 
-	ui.horizontalSlider_3->setEnabled(true);
+	ui.horizontalSlider_contourThresh->setEnabled(true);
 	ui.horizontalSlider_closeKSize->setEnabled(true);
 	ui.horizontalSlider_exposureTime->setEnabled(true);
 
@@ -317,4 +353,3 @@ void WorkpieceIdentification::closeEvent(QCloseEvent* event)
 {
 	IGXFactory::GetInstance().Uninit();
 }
-

@@ -8,12 +8,16 @@
 using namespace std;
 
 
-//MyCamera_2::MyCamera_2()
+//MyCamera::MyCamera()
 //{
 //
 //}
+//MyCamera::~MyCamera()
+//{
+//	;
+//}
 
-void MyCamera_2::configCameraParamOnInit()
+void MyCamera::configCameraParamOnInit()
 {
 	m_objFeatureControlPtr->GetEnumFeature("TriggerMode")->SetValue("On");
 	m_objFeatureControlPtr->GetEnumFeature("TriggerSource")->SetValue("Software");
@@ -24,13 +28,7 @@ void MyCamera_2::configCameraParamOnInit()
 }
 
 
-//MyCamera_2::~MyCamera_2()
-//{
-//	;
-//}
-
-
-cv::Mat MyCamera_2::getSingleFrame()
+cv::Mat MyCamera::getSingleFrame()
 {
 	try { m_objFeatureControlPtr->GetCommandFeature("TriggerSoftware")->Execute(); }
 	catch (CGalaxyException& e)
@@ -55,18 +53,18 @@ cv::Mat MyCamera_2::getSingleFrame()
 }
 
 
-void MyCamera_2::balanceWhite()
+void MyCamera::balanceWhite()
 {
 	if (m_bIsOpen) m_objFeatureControlPtr->GetEnumFeature("BalanceWhiteAuto")->SetValue("Once");
 }
 
-void MyCamera_2::setExposureTime(float val)
+void MyCamera::setExposureTime(float val)
 {
 	if (m_bIsOpen && 20.0 < val && val < 1000000.0)
 		m_objFeatureControlPtr->GetFloatFeature("ExposureTime")->SetValue(val);
 }
 
-void MyCamera_2::setResolution(int width, int height, bool on_init)
+void MyCamera::setResolution(int width, int height, bool on_init)
 {
 	if (minWidth <= width && minHeight <= height && width <= maxWidth && height <= maxHeight)
 	{
@@ -88,7 +86,7 @@ void MyCamera_2::setResolution(int width, int height, bool on_init)
 	else {}
 }
 
-std::string MyCamera_2::saveCurrentFrame()
+std::string MyCamera::saveCurrentFrame()
 {
 	if (!m_frame.empty())
 	{
@@ -106,7 +104,7 @@ std::string MyCamera_2::saveCurrentFrame()
 	}
 }
 
-void MyCamera_2::openDevice()
+void MyCamera::openDevice()
 {
 	// TODO: Add your control notification handler code here
 	bool bIsDeviceOpen = false;         ///< 设备是否打开标志
@@ -182,7 +180,7 @@ void MyCamera_2::openDevice()
 
 
 
-void MyCamera_2::closeDevice()
+void MyCamera::closeDevice()
 {
 
 	try
@@ -211,7 +209,7 @@ void MyCamera_2::closeDevice()
 	m_bIsSnap = false;
 }
 
-void MyCamera_2::startSnap()
+void MyCamera::startSnap()
 {
 	try
 	{
@@ -226,7 +224,7 @@ void MyCamera_2::startSnap()
 	catch (std::exception& e) { ; }
 }
 
-void MyCamera_2::stopSnap()
+void MyCamera::stopSnap()
 {
 	try
 	{

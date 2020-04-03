@@ -121,11 +121,10 @@ cv::Mat MyDetector::drawInstances(cv::Mat img, std::vector<Workpiece> instances,
 
 std::vector<std::vector<cv::Point>> MyDetector::removeFalseContours(std::vector<std::vector<cv::Point>> contours)
 {
-	int thresh = 500;
-	int num_false = 0;
-	for (int i = 0; i < contours.size(); i++)
+	int num_false = 0, totalSize = contours.size();
+	for (int i = 0; i < totalSize; i++)
 	{
-		if (contours[i - num_false].size() < thresh)
+		if (contours[i - num_false].size() < contourFilterThresh)
 		{
 			contours.erase(contours.begin() + i - num_false);
 			num_false += 1;

@@ -24,6 +24,7 @@ public:
 	bool    flag_unevenLightCompensate = false;
 	int	cannyThreshA = 30;
 	int	cannyThreshB = 70;
+	int contourFilterThresh = 400;
 	double  close_ksize_percentage = 5. / 100.;
 	double  positions[6] = { 1. / 12., 3. / 12., 5. / 12., 7. / 12., 9. / 12., 11. / 12. };
 	double	radius_template[4][6];
