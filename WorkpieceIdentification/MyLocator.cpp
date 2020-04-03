@@ -110,8 +110,8 @@ bool MyLocator::calibrateSingleImage(cv::Mat img)
 		}
 	objPts.push_back(cv::Point3f(0, 0, 0));
 	objPts.push_back(cv::Point3f(gridLength * 5, 0, 0));
-	objPts.push_back(cv::Point3f(0, gridLength * 5, 0));
-	objPts.push_back(cv::Point3f(gridLength * 5, gridLength * 5, 0));
+	objPts.push_back(cv::Point3f(0, gridLength * 3, 0));
+	objPts.push_back(cv::Point3f(gridLength * 5, gridLength * 3, 0));
 
 	cv::cvtColor(img, gray, cv::COLOR_BGR2GRAY);
 	bool success = cv::findChessboardCorners(gray, cv::Size(CHECKERBOARD[0], CHECKERBOARD[1]), cornerPts,
@@ -125,13 +125,12 @@ bool MyLocator::calibrateSingleImage(cv::Mat img)
 		cv::Rodrigues(rVec, rotMat);//Transform rVec to rotMat
 		cv::projectPoints(objPts, rVec, tVec, intrinsicMat, distCoeffs, imgPts);
 		estimateS(imgPts); //estimate S coeff
-		//for (int i = 0; i < imgPts.size(); i++) {
-		//	cv::circle(img, imgPts[i], 20, CV_RGB(255, 0, 0), -1);
-		//}
-		//cv::Mat showImg;
-		//cv::resize(img, showImg, cv::Size(resolution.width / 3, resolution.height / 3));
-		//cv::imshow("Press Any Key To Continue.", showImg);
-		//cv::waitKey(1);
+		for (int i = 0; i < imgPts.size(); i++) {
+			cv::circle(img, imgPts[i], 20, CV_RGB(255, 0, 0), -1);
+		}
+		cv::Mat showImg;
+		cv::resize(img, showImg, cv::Size(resolution.width / 3, resolution.height / 3));
+		cv::imwrite("./result_calibrateSingleImage.jpg", showImg);
 		return true;
 	}
 	else { return false; }

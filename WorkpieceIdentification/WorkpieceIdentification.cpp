@@ -46,7 +46,7 @@ void WorkpieceIdentification::on_pushButton_calibrateCoor_clicked()
 
 		if (locator.calibrateSingleImage(currentFrame))
 		{
-			QMessageBox::information(NULL, "Ok", "Successful calibration.", QMessageBox::Ok);
+			QMessageBox::information(NULL, "Ok", "Successful calibration. Please validate by checking result_calibrateSingleImage.jpg", QMessageBox::Ok);
 		}
 		else
 		{
