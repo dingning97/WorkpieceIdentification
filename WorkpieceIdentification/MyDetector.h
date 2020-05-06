@@ -15,6 +15,7 @@ public:
 	cv::Point centroid;
 	std::vector<cv::Point> contour;
 	cv::RotatedRect minAreaRect;
+	double angle; //in degree
 	int cls;
 };
 

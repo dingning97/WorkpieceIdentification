@@ -94,6 +94,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CalibrateIntrinsicsAndDistCoeffs.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="MyCamera.cpp" />
     <ClCompile Include="MyDetector.cpp" />

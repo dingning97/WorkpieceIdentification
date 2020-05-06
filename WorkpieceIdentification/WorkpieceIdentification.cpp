@@ -44,9 +44,18 @@ void WorkpieceIdentification::on_pushButton_calibrateCoor_clicked()
 		locator.intrinsicMat = MyLocator::loadMatFromFile(intrFile, 3, 3);
 		locator.distCoeffs = MyLocator::loadMatFromFile(distCoeffsFile, 1, 5);
 
+		if (locator.intrinsicMat.empty() || locator.distCoeffs.empty())
+		{
+			const char* info = "未能成功载入内参矩阵和畸变参数, 请检查目录下的intrinsicParam.txt和distCoeffs.txt";
+			QMessageBox::information(NULL, "Error", QString::fromLocal8Bit(info), QMessageBox::Ok);
+			return;
+		}
+
 		if (locator.calibrateSingleImage(currentFrame))
 		{
-			QMessageBox::information(NULL, "Ok", "Successful calibration. Please validate by checking result_calibrateSingleImage.jpg", QMessageBox::Ok);
+			QMessageBox message(QMessageBox::NoIcon, QString::fromLocal8Bit("坐标系标定成功"), QString::fromLocal8Bit(" "), QMessageBox::Ok);
+			message.setIconPixmap(QPixmap("result_calibrateSingleImage.jpg"));
+			message.exec();
 		}
 		else
 		{
@@ -123,7 +132,7 @@ void WorkpieceIdentification::on_timer_camera_timeout()
 cv::Mat WorkpieceIdentification::detectOnFrame(const cv::Mat &frame, double scaleFactor)
 {
 	vector<Workpiece> instances = detector.segmentAndGetInstance(frame, false);
-	if (instances.size() != 0)
+	if (0 != instances.size())
 	{
 		updateDetectionResult(instances, scaleFactor);
 		return detector.drawInstances(frame, instances);
@@ -138,12 +147,13 @@ void WorkpieceIdentification::updateDetectionResult(const vector<Workpiece> &ins
 	string str = "Number of items : " + to_string(instances.size()) + "\n\n\n";
 	for (int i = 0; i < instances.size(); i++)
 	{
-		str += "\nclass : " + to_string(instances[i].cls) + "\n";
-		str += "Img Coor :\n(" + to_string(instances[i].centroid.x) + ", " + to_string(instances[i].centroid.y) + ")\n";
+		str += "\nClass : " + to_string(instances[i].cls) + "\n";
+		str += "Angle : " + to_string(instances[i].angle) + "\n";
+		str += "Image Coor : (" + to_string(instances[i].centroid.x) + ", " + to_string(instances[i].centroid.y) + ")\n";
 		if ((!locator.tVec.empty())&& (!locator.rVec.empty()))
 		{
 			cv::Mat worldPt = locator.calcRealCoor(cv::Point2f(instances[i].centroid.x * scaleFactor, instances[i].centroid.y * scaleFactor));
-			str += "World Coor :\n(" + to_string(int(worldPt.at<double>(0, 0))) + "mm, "
+			str += "World Coor : (" + to_string(int(worldPt.at<double>(0, 0))) + "mm, "
 				+ to_string(int(worldPt.at<double>(1, 0))) + "mm)\n";
 		}
 	}
@@ -212,7 +222,7 @@ void WorkpieceIdentification::on_horizontalSlider_contourThresh_valueChanged()
 void WorkpieceIdentification::on_horizontalSlider_closeKSize_valueChanged()
 {
 	int val = ui.horizontalSlider_closeKSize->value();
-	std::string sval = "Close Op K size:" + std::to_string(val) + "%";
+	std::string sval = "CloseOp K size:" + std::to_string(val) + "%";
 	ui.label_5->setText(sval.c_str());
 	detector.close_ksize_percentage = val / 100.0;
 }
@@ -225,7 +235,7 @@ void WorkpieceIdentification::on_horizontalSlider_exposureTime_valueChanged()
 		int val = ui.horizontalSlider_exposureTime->value();
 		if (2 <= val && val <= 10) exp_time = (val - 1) * 1000;
 		else exp_time = (val - 10) * 10000;
-		std::string sval = "Exposure:" + std::to_string(exp_time) + "ms";
+		std::string sval = "Exposure:" + std::to_string(exp_time) + "us";
 		ui.label_6->setText(sval.c_str());
 		cam.setExposureTime(float(exp_time));
 	}

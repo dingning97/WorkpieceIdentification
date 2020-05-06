@@ -40,6 +40,9 @@
     <ClCompile Include="MyLocator.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="CalibrateIntrinsicsAndDistCoeffs.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="WorkpieceIdentification.h">

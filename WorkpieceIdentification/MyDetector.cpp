@@ -1,5 +1,6 @@
 #include "MyDetector.h"
 #include <cmath>
+#include <iostream>
 
 double euc_distance(double arr1[], double arr2[], int len)
 {
@@ -64,7 +65,8 @@ cv::Point MyDetector::getCentroid(std::vector<cv::Point> contour)
 
 int MyDetector::sampleRadiusAndClassify(cv::Mat roi)
 {
-	int width = roi.size().width, height = roi.size().height;
+	int width = roi.size().width;
+	int height = roi.size().height;
 	if (width > height)
 	{
 		cv::transpose(roi, roi);
@@ -150,7 +152,6 @@ MyDetector::MyDetector()
 }
 
 
-
 Workpiece MyDetector::getInstanceInfo(cv::Mat img, std::vector<cv::Point> contour)
 {
 	using namespace std;
@@ -167,6 +168,7 @@ Workpiece MyDetector::getInstanceInfo(cv::Mat img, std::vector<cv::Point> contou
 	vector<vector<Point>> tmp_c;
 	tmp_c.push_back(contour);
 	drawContours(contour_img, tmp_c, -1, Scalar(255), -1);
+
 	if (45 < abs(angle) && abs(angle) < 90)
 	{
 		angle = roRect.angle + 90;
@@ -174,6 +176,17 @@ Workpiece MyDetector::getInstanceInfo(cv::Mat img, std::vector<cv::Point> contou
 		roWidth = roRect.size.height;
 	}
 
+	// Decide whether to discard this target by its side ratio.
+	float biggerSide = roRect.size.width > roRect.size.height ? roRect.size.width : roRect.size.height;
+	float smallerSide = roRect.size.width < roRect.size.height ? roRect.size.width : roRect.size.height;
+	float ratio = biggerSide / smallerSide;
+	if (ratio < 3.5 || ratio > 5)
+	{
+		info.cls = -1;
+		return info;
+	}
+
+	// Judge whether the rotated rect is out of bound.
 	if (center.x - roWidth / 2 - 1 < 0 || center.y - roHeight / 2 - 1 < 0 ||
 		center.x + roWidth / 2 + 2 >= img.size().width || center.y + roHeight / 2 + 2 >= img.size().height)
 	{
@@ -183,13 +196,21 @@ Workpiece MyDetector::getInstanceInfo(cv::Mat img, std::vector<cv::Point> contou
 
 	Mat ROI;
 	if (angle == 0)
+	{
 		ROI = contour_img(Rect(center.x - roWidth / 2, center.y - roHeight / 2, roWidth + 2, roHeight + 2));
+	}
 	else
 	{
 		Mat M = getRotationMatrix2D(center, angle, 1), warpped;
 		warpAffine(contour_img, warpped, M, contour_img.size());
 		ROI = warpped(Rect(center.x - roWidth / 2, center.y - roHeight / 2, roWidth + 2, roHeight + 2));
 	}
+
+	// Calculate the angle between the horizontal line and the major axis of roRect
+	if (roRect.size.width >= roRect.size.height)
+		info.angle = - roRect.angle;
+	else
+		info.angle = 90 - roRect.angle;
 	info.contour = contour;
 	info.centroid = center;
 	info.minAreaRect = roRect;

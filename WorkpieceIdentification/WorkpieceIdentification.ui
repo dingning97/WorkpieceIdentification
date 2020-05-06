@@ -6,9 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1193</width>
+    <width>1278</width>
     <height>679</height>
    </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
   </property>
   <property name="windowTitle">
    <string>WorkpieceIdentification</string>
@@ -17,10 +23,10 @@
    <widget class="QWidget" name="gridLayoutWidget">
     <property name="geometry">
      <rect>
-      <x>10</x>
-      <y>20</y>
+      <x>20</x>
+      <y>10</y>
       <width>271</width>
-      <height>191</height>
+      <height>181</height>
      </rect>
     </property>
     <layout class="QGridLayout" name="gridLayout">
@@ -73,7 +79,7 @@
      <rect>
       <x>10</x>
       <y>330</y>
-      <width>281</width>
+      <width>291</width>
       <height>321</height>
      </rect>
     </property>
@@ -88,7 +94,7 @@
      <item row="5" column="0">
       <widget class="QLabel" name="label_5">
        <property name="text">
-        <string>Close Op K size:5</string>
+        <string>CloseOp K size:5</string>
        </property>
       </widget>
      </item>
@@ -146,25 +152,6 @@
      <item row="3" column="1">
       <widget class="QSpinBox" name="spinBox_4"/>
      </item>
-     <item row="5" column="1">
-      <widget class="QSlider" name="horizontalSlider_closeKSize">
-       <property name="minimumSize">
-        <size>
-         <width>112</width>
-         <height>20</height>
-        </size>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>112</width>
-         <height>20</height>
-        </size>
-       </property>
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-      </widget>
-     </item>
      <item row="8" column="1">
       <widget class="QSlider" name="horizontalSlider_exposureTime">
        <property name="orientation">
@@ -175,7 +162,14 @@
      <item row="8" column="0">
       <widget class="QLabel" name="label_6">
        <property name="text">
-        <string>Exposure:100000ms</string>
+        <string>Exposure:100000us</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="1">
+      <widget class="QSlider" name="horizontalSlider_closeKSize">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
        </property>
       </widget>
      </item>
@@ -184,7 +178,7 @@
    <widget class="QLabel" name="label_display">
     <property name="geometry">
      <rect>
-      <x>300</x>
+      <x>320</x>
       <y>10</y>
       <width>641</width>
       <height>641</height>
@@ -200,7 +194,7 @@
    <widget class="QLabel" name="label_9">
     <property name="geometry">
      <rect>
-      <x>960</x>
+      <x>980</x>
       <y>10</y>
       <width>211</width>
       <height>51</height>
@@ -213,11 +207,17 @@
    <widget class="QLabel" name="label_showResult">
     <property name="geometry">
      <rect>
-      <x>950</x>
+      <x>970</x>
       <y>10</y>
-      <width>231</width>
+      <width>301</width>
       <height>641</height>
      </rect>
+    </property>
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
     </property>
     <property name="styleSheet">
      <string notr="true">border: 2px solid #000000; </string>

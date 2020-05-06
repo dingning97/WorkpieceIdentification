@@ -1,7 +1,38 @@
 #include"MyLocator.h"
 
 using namespace std;
-using namespace cv;
+
+////int direction:
+////1-upward / 2-downward / 3-leftward / 4-rightward
+//void drawArrow(cv::Mat& img, cv::Point2f& startPt, cv::Point2f& endPt, int direction)
+//{
+//	cv::Point2f end1, end2;
+//	if (1 == direction)
+//	{
+//		end1 = cv::Point2f(endPt.x - 30, endPt.y + 30);
+//		end2 = cv::Point2f(endPt.x + 30, endPt.y + 30);
+//	}
+//	else if (2 == direction)
+//	{
+//		end1 = cv::Point2f(endPt.x - 30, endPt.y - 30);
+//		end2 = cv::Point2f(endPt.x + 30, endPt.y - 30);
+//	}
+//	else if (3 == direction)
+//	{
+//		end1 = cv::Point2f(endPt.x + 30, endPt.y - 30);
+//		end2 = cv::Point2f(endPt.x + 30, endPt.y + 30);
+//	}
+//	else if (4 == direction)
+//	{
+//		end1 = cv::Point2f(endPt.x - 30, endPt.y - 30);
+//		end2 = cv::Point2f(endPt.x - 30, endPt.y + 30);
+//	}
+//	else return;
+//
+//	cv::line(img, startPt, endPt, CV_RGB(255, 255, 0), 2);
+//	cv::line(img, endPt, end1, CV_RGB(255, 255, 0), 2);
+//	cv::line(img, endPt, end2, CV_RGB(255, 255, 0), 2);
+//}
 
 
 void writeMatToFile(const cv::Mat& m, const string& filename)
@@ -25,8 +56,8 @@ void writeMatToFile(const cv::Mat& m, const string& filename)
 	cout << "File Written Succes." << endl;
 }
 
-
-bool MyLocator::calibrateCameraInit(const string& imgPath)//string imgPath = "D:\\1GraduationPrj\\cproject\\*.bmp"; 
+//string imgPath = "D:\\1GraduationPrj\\cproject\\*.bmp"; 
+bool MyLocator::calibrateCameraInit(const string& imgPath)
 {
 	vector<cv::String> images;
 	cv::glob(imgPath, images);
@@ -59,10 +90,10 @@ bool MyLocator::calibrateCameraInit(const string& imgPath)//string imgPath = "D:
 		cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
 
 		success = cv::findChessboardCorners(gray, cv::Size(CHECKERBOARD[0], CHECKERBOARD[1]), cornerPt,
-			CALIB_CB_ADAPTIVE_THRESH | CALIB_CB_FAST_CHECK | CALIB_CB_NORMALIZE_IMAGE);
+			cv::CALIB_CB_ADAPTIVE_THRESH | cv::CALIB_CB_FAST_CHECK | cv::CALIB_CB_NORMALIZE_IMAGE);
 		if (success)
 		{
-			cv::TermCriteria criteria(TermCriteria::EPS | TermCriteria::Type::MAX_ITER, 30, 0.001);
+			cv::TermCriteria criteria(cv::TermCriteria::EPS | cv::TermCriteria::Type::MAX_ITER, 30, 0.001);
 			cv::cornerSubPix(gray, cornerPt, cv::Size(11, 11), cv::Size(-1, -1), criteria);
 			cv::drawChessboardCorners(frame, cv::Size(CHECKERBOARD[0], CHECKERBOARD[1]), cornerPt, success);
 			objpoints.push_back(objPt);
@@ -99,6 +130,7 @@ bool MyLocator::calibrateSingleImage(cv::Mat img)
 	if (intrinsicMat.empty() || distCoeffs.empty()) {
 		return false;
 	}
+
 	cv::Mat gray;
 	vector<cv::Point3f> objPts, worldPts;
 	vector<cv::Point2f> imgPts, cornerPts;
@@ -125,15 +157,29 @@ bool MyLocator::calibrateSingleImage(cv::Mat img)
 		cv::Rodrigues(rVec, rotMat);//Transform rVec to rotMat
 		cv::projectPoints(objPts, rVec, tVec, intrinsicMat, distCoeffs, imgPts);
 		estimateS(imgPts); //estimate S coeff
+
+		//Draw info for visualization
+		string drawText[4];
+		drawText[0] = "(" + to_string(0) + "," + to_string(0) +  ")";
+		drawText[1] = "(" + to_string(int(gridLength * 5)) + "," + to_string(0) + ")";
+		drawText[2] = "(" + to_string(0) + "," + to_string(int(gridLength * 3)) + ")";
+		drawText[3] = "(" + to_string(int(gridLength * 5)) + "," + to_string(int(gridLength * 3)) + ")";
+
 		for (int i = 0; i < imgPts.size(); i++) {
 			cv::circle(img, imgPts[i], 20, CV_RGB(255, 0, 0), -1);
+			cv::putText(img, drawText[i], imgPts[i], cv::FONT_HERSHEY_PLAIN, 6, CV_RGB(255, 0, 0), 6);
 		}
+		cv::line(img, imgPts[0], imgPts[1], CV_RGB(255, 255, 0), 10);
+		cv::line(img, imgPts[0], imgPts[2], CV_RGB(255, 255, 0), 10);
 		cv::Mat showImg;
 		cv::resize(img, showImg, cv::Size(resolution.width / 3, resolution.height / 3));
-		cv::imwrite("./result_calibrateSingleImage.jpg", showImg);
+
+		cv::putText(showImg, "Coordinates are displayed in (X, Y).", cv::Point2f(10, 30), cv::FONT_HERSHEY_PLAIN, 2, CV_RGB(255, 255, 0), 2);
+		cv::imwrite("result_calibrateSingleImage.jpg", showImg);
 		return true;
 	}
-	else { return false; }
+	else
+		return false;
 }
 
 void MyLocator::estimateS(const vector<cv::Point2f> &imgPts)
